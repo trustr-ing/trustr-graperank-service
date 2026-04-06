@@ -30,8 +30,8 @@ export function registerRoutes(
   app.get('/tsm/announce', async (_req, reply) => {
     const announcement = generateServiceAnnouncement({
       identifier: config.serviceId,
-      title: 'GrapeRank Web-of-Trust Ranking',
-      summary: 'Rank Nostr subjects by web-of-trust using the GrapeRank algorithm',
+      title: 'Trustr Graperank Service',
+      summary: 'Rank Nostr users and content by follows, mutes, reports, zaps, attestation, and other interactions.',
       pagination: true,
     })
     return reply.send(announcement)
