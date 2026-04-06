@@ -1,0 +1,26 @@
+[Unit]
+Description=GrapeRank TSM Service
+Documentation=https://github.com/trustr/graperank-tsm
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=trustr
+Group=trustr
+WorkingDirectory=/opt/graperank-service
+EnvironmentFile=/opt/graperank-service/.env
+ExecStart=/usr/bin/node dist/index.js
+Restart=on-failure
+RestartSec=5s
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=graperank-service
+
+# Security hardening
+NoNewPrivileges=true
+ProtectSystem=full
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

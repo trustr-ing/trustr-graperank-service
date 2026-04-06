@@ -1,0 +1,28 @@
+{
+  "name": "trustr-graperank-service",
+  "version": "0.1.0",
+  "description": "Trustr GrapeRank TSM service — receives forwarded kind 37572 requests and runs GrapeRank WoT ranking",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "esbuild src/index.ts --bundle --platform=node --target=node18 --outfile=dist/index.js",
+    "typecheck": "tsc --noEmit",
+    "start": "node dist/index.js",
+    "dev": "tsx src/index.ts"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "fastify": "^5.8.4",
+    "@graperank/tsm-graperank-library": "^1.0.0",
+    "nostr-tools": "^2.7.2",
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/ws": "^8.5.13",
+    "esbuild": "^0.25.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0"
+  }
+}
