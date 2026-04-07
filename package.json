@@ -13,8 +13,8 @@
     "node": ">=18.0.0"
   },
   "dependencies": {
-    "fastify": "^5.8.4",
     "@graperank/tsm-graperank-library": "github:graperank/tsm-graperank-library",
+    "fastify": "^5.8.4",
     "nostr-tools": "^2.7.2",
     "ws": "^8.18.0"
   },
