@@ -14,7 +14,7 @@
   },
   "dependencies": {
     "fastify": "^5.8.4",
-    "@graperank/tsm-graperank-library": "^1.0.0",
+    "@graperank/tsm-graperank-library": "github:graperank/tsm-graperank-library",
     "nostr-tools": "^2.7.2",
     "ws": "^8.18.0"
   },
