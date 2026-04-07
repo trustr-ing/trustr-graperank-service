@@ -4,6 +4,7 @@ import {
   ServiceRequestParseError,
   executeServiceRequest,
   generateServiceAnnouncement,
+  NostrInterpreterClass,
 } from '@graperank/tsm-graperank-library'
 import type { UnsignedEvent } from '@graperank/tsm-graperank-library'
 import type { GrapeRankServiceConfig } from '../config'
@@ -27,6 +28,12 @@ export function registerRoutes(
   app: FastifyInstance,
   config: GrapeRankServiceConfig,
 ): void {
+  NostrInterpreterClass.relays = [
+    'wss://cache.trustr.ing',
+    'wss://relay.primal.net',
+    'wss://relay.damus.io',
+  ]
+
   app.get('/tsm/announce', async (_req, reply) => {
     const announcement = generateServiceAnnouncement({
       identifier: config.serviceId,
