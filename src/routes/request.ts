@@ -29,7 +29,7 @@ export function registerRoutes(
   config: GrapeRankServiceConfig,
 ): void {
   NostrInterpreterClass.relays = [
-    'wss://cache.trustr.ing',
+    'ws://10.118.0.4:8080',
     'wss://relay.primal.net',
     'wss://relay.damus.io',
   ]
@@ -91,6 +91,10 @@ export function registerRoutes(
       reply.raw.write(`data: ${JSON.stringify(unsignedEvent)}\n\n`)
     }
 
+    const sendKeepAlive = (): void => {
+      reply.raw.write(': keep-alive\n\n')
+    }
+
     try {
       await executeServiceRequest({
         requestEvent: event,
@@ -100,6 +104,7 @@ export function registerRoutes(
         callbacks: {
           onFeedbackEvent: sendEvent,
           onOutputEvent: sendEvent,
+          onKeepAlive: sendKeepAlive,
         },
       })
       console.log(`${logPrefix} completed successfully`)
