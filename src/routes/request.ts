@@ -33,6 +33,7 @@ export function registerRoutes(
     'wss://relay.primal.net',
     'wss://relay.damus.io',
   ]
+  console.log('[graperank-service] NostrInterpreterClass.relays set to:', NostrInterpreterClass.relays)
 
   app.get('/tsm/announce', async (_req, reply) => {
     const announcement = generateServiceAnnouncement({
