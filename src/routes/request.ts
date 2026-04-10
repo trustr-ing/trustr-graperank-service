@@ -29,6 +29,7 @@ export function registerRoutes(
   config: GrapeRankServiceConfig,
 ): void {
   NostrInterpreterClass.relays = [
+    'ws://10.118.0.4:8080',
     'wss://relay.primal.net',
     'wss://relay.damus.io',
   ]
