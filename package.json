@@ -4,7 +4,7 @@
   "description": "Trustr GrapeRank TSM service — receives forwarded kind 37572 requests and runs GrapeRank WoT ranking",
   "main": "dist/index.js",
   "scripts": {
-    "build": "esbuild src/index.ts --bundle --platform=node --target=node18 --outfile=dist/index.js --external:fastify --external:nostr-tools --external:ws",
+    "build": "esbuild src/index.ts --bundle --platform=node --target=node18 --outfile=dist/index.js --external:fastify --external:nostr-tools --external:ws --external:better-sqlite3",
     "typecheck": "tsc --noEmit",
     "start": "node dist/index.js",
     "dev": "tsx src/index.ts"
@@ -14,6 +14,8 @@
   },
   "dependencies": {
     "@graperank/tsm-graperank-library": "github:graperank/tsm-graperank-library",
+    "@types/better-sqlite3": "^7.6.13",
+    "better-sqlite3": "^12.9.0",
     "fastify": "^5.8.4",
     "nostr-tools": "^2.7.2",
     "ws": "^8.18.0"

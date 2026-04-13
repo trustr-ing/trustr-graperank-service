@@ -8,6 +8,7 @@ import {
 } from '@graperank/tsm-graperank-library'
 import type { UnsignedEvent } from '@graperank/tsm-graperank-library'
 import type { GrapeRankServiceConfig } from '../config'
+import { RequestEventBuffer } from '../buffer/RequestEventBuffer'
 
 interface NostrEvent {
   id: string
@@ -22,6 +23,12 @@ interface NostrEvent {
 interface RequestBody {
   event: NostrEvent
   serviceId: string
+}
+
+const eventBuffer = new RequestEventBuffer()
+
+export function getEventBuffer(): RequestEventBuffer {
+  return eventBuffer
 }
 
 export function registerRoutes(
@@ -89,6 +96,7 @@ export function registerRoutes(
     })
 
     const sendEvent = (unsignedEvent: UnsignedEvent): void => {
+      eventBuffer.addEvent(event.id, unsignedEvent)
       reply.raw.write(`data: ${JSON.stringify(unsignedEvent)}\n\n`)
     }
 
@@ -109,14 +117,40 @@ export function registerRoutes(
         },
       })
       console.log(`${logPrefix} completed successfully`)
+      eventBuffer.markCompleted(event.id)
     } catch (err) {
       const message = (err as Error).message
       console.error(`${logPrefix} execution error: ${message}`)
       sendEvent(buildFeedbackEvent(event, 'error', `Execution error: ${message}`))
+      eventBuffer.markCompleted(event.id)
     } finally {
       reply.raw.end()
     }
   })
+
+  app.get<{ Params: { requestId: string }, Querystring: { cursor?: string } }>(
+    '/tsm/request/:requestId/events',
+    async (req, reply) => {
+      const { requestId } = req.params
+      const cursor = parseInt(req.query.cursor || '0', 10)
+
+      const status = eventBuffer.getStatus(requestId)
+      if (!status) {
+        return reply.status(404).send({ error: 'Request not found or expired' })
+      }
+
+      const events = eventBuffer.getEvents(requestId, cursor)
+
+      return reply.send({
+        requestId,
+        events,
+        cursor: cursor + events.length,
+        completed: status.completed,
+        totalEvents: status.eventCount,
+        hasMore: cursor + events.length < status.eventCount,
+      })
+    }
+  )
 
   app.get('/health', async (_req, reply) => {
     reply.status(200).send({ status: 'ok', serviceId: config.serviceId })

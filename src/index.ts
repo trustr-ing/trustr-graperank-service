@@ -2,7 +2,7 @@ import Fastify from 'fastify'
 import WebSocket from 'ws'
 import { useWebSocketImplementation } from 'nostr-tools/pool'
 import { loadConfig } from './config'
-import { registerRoutes } from './routes/request'
+import { registerRoutes, getEventBuffer } from './routes/request'
 
 // Inject ws into nostr-tools so SimplePool works in Node.js
 // (the graperank-tsm library uses SimplePool to fetch events from relays)
@@ -28,6 +28,8 @@ async function main(): Promise<void> {
   const shutdown = async (): Promise<void> => {
     console.log('[graperank-service] shutting down...')
     await app.close()
+    getEventBuffer().close()
+    console.log('[graperank-service] cleanup complete')
     process.exit(0)
   }
 
