@@ -10,7 +10,7 @@ interface BufferedRequestStatus {
 }
 
 const CLEANUP_INTERVAL_MS = 60_000
-const COMPLETED_REQUEST_TTL_MS = 600_000
+const COMPLETED_REQUEST_TTL_MS = 1_800_000
 
 export class RequestEventBuffer {
   private db: Database.Database
