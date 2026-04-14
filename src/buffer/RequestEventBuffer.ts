@@ -16,7 +16,7 @@ export class RequestEventBuffer {
   private db: Database.Database
   private cleanupInterval: NodeJS.Timeout | null = null
 
-  constructor(dbPath: string = ':memory:') {
+  constructor(dbPath: string = '/tmp/graperank-events.db') {
     this.db = new Database(dbPath)
     this.initializeSchema()
     this.startCleanup()
