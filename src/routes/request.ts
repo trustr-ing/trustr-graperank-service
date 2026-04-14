@@ -161,16 +161,24 @@ function buildFeedbackEvent(
   requestEvent: NostrEvent,
   status: 'info' | 'warning' | 'error' | 'success',
   message: string,
+  metrics?: any,
 ): UnsignedEvent {
+  const tags: string[][] = [
+    ['e', requestEvent.id, '', 'request'],
+    ['p', requestEvent.pubkey],
+    ['k', String(requestEvent.kind)],
+    ['status', status],
+  ]
+
+  // Add structured metrics as a tag if provided
+  if (metrics) {
+    tags.push(['metrics', JSON.stringify(metrics)])
+  }
+
   return {
     kind: 7000,
     created_at: Math.floor(Date.now() / 1000),
-    tags: [
-      ['e', requestEvent.id, '', 'request'],
-      ['p', requestEvent.pubkey],
-      ['k', String(requestEvent.kind)],
-      ['status', status],
-    ],
+    tags,
     content: message,
   }
 }
