@@ -13,7 +13,7 @@
     "node": ">=18.0.0"
   },
   "dependencies": {
-    "@graperank/tsm-graperank-library": "github:graperank/tsm-graperank-library#main",
+    "@graperank/tsm-graperank-library": "^1.0.3",
     "better-sqlite3": "^11.7.0",
     "fastify": "^5.2.1",
     "nostr-tools": "^2.7.2",
