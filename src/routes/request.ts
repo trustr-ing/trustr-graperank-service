@@ -23,9 +23,16 @@ interface NostrEvent {
 interface RequestBody {
   event: NostrEvent
   serviceId: string
+  defaultReadRelays?: string[]
+  defaultWriteRelays?: string[]
 }
 
 const eventBuffer = new RequestEventBuffer()
+const parseServiceRequestWithOptions = parseServiceRequest as (
+  event: NostrEvent,
+  defaults?: unknown,
+  options?: { allowedTypes?: string[] },
+) => ReturnType<typeof parseServiceRequest>
 
 export function getEventBuffer(): RequestEventBuffer {
   return eventBuffer
@@ -35,36 +42,42 @@ export function registerRoutes(
   app: FastifyInstance,
   config: GrapeRankServiceConfig,
 ): void {
-  NostrInterpreterClass.relays = [
-    'ws://10.118.0.4:8080',
-    'wss://relay.primal.net',
-    'wss://relay.damus.io',
-  ]
-  console.log('[graperank-service] NostrInterpreterClass.relays set to:', NostrInterpreterClass.relays)
-
   app.get('/tsm/announce', async (_req, reply) => {
     const announcement = generateServiceAnnouncement({
       identifier: config.serviceId,
       title: 'Trustr Graperank Service',
       summary: 'Rank Nostr users and content by follows, mutes, reports, zaps, attestation, and other interactions.',
       pagination: true,
-    })
+      type: {
+        default: config.defaultRequestType,
+        allowed: config.allowedRequestTypes,
+        valueType: 'event-field-or-tag',
+        description: 'Requested output subject source (exact event field or exact tag name).',
+      },
+    } as any)
     return reply.send(announcement)
   })
 
   app.post<{ Body: RequestBody }>('/tsm/request', async (req, reply) => {
-    const { event, serviceId } = req.body
+    const { event, serviceId, defaultReadRelays } = req.body
 
     if (!event || typeof event !== 'object') {
       return reply.status(400).send({ error: 'Missing or invalid event' })
     }
 
     const logPrefix = `[request:${event.id.slice(0, 8)}...]`
+    const effectiveReadRelays = (defaultReadRelays && defaultReadRelays.length > 0)
+      ? defaultReadRelays
+      : config.fallbackReadRelays
+    NostrInterpreterClass.relays = effectiveReadRelays
+    console.log('[graperank-service] NostrInterpreterClass.relays set to:', NostrInterpreterClass.relays)
 
     // Parse the request before starting the stream
     let parsedRequest
     try {
-      parsedRequest = parseServiceRequest(event)
+      parsedRequest = parseServiceRequestWithOptions(event, undefined, {
+        allowedTypes: config.allowedRequestTypes,
+      })
     } catch (err) {
       const message = err instanceof ServiceRequestParseError
         ? `Parse error (${err.field ?? 'unknown'}): ${err.message}`

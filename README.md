@@ -32,6 +32,9 @@ cp .env.example .env
 | `SERVICE_ID` | no | Service identifier (default: `graperank_wot`) — must match `TSM_SERVICE_N_SERVICE_ID` in orchestrator |
 | `PAGE_SIZE` | no | Max results per kind 37573 output page (default: `1000`) |
 | `VERBOSE_FEEDBACK` | no | Emit verbose kind 7000 info events during interpretation/calculation (default: `false`) |
+| `READ_RELAYS` | no | Fallback comma-separated read relays used when orchestrator payload does not include `defaultReadRelays` |
+| `ALLOWED_REQUEST_TYPES` | no | Allowed `config:type` values accepted by parser and published in announcement (default: `pubkey,p,P`) |
+| `DEFAULT_REQUEST_TYPE` | no | Default `config:type` published in service announcement (default: `p`) |
 
 ## Development
 
