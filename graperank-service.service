@@ -6,10 +6,10 @@ Wants=network-online.target
 
 [Service]
 Type=simple
-User=trustr
-Group=trustr
-WorkingDirectory=/opt/graperank-service
-EnvironmentFile=/opt/graperank-service/.env
+User=root
+Group=root
+WorkingDirectory=/opt/trustr-graperank-service
+EnvironmentFile=/opt/trustr-graperank-service/.env
 ExecStart=/usr/bin/node dist/index.js
 Restart=on-failure
 RestartSec=5s
