@@ -46,13 +46,13 @@ export function registerRoutes(
     const announcement = generateServiceAnnouncement({
       identifier: config.serviceId,
       title: 'Trustr Graperank Service',
-      summary: 'Rank Nostr users and content by follows, mutes, reports, zaps, attestation, and other interactions.',
+      summary: 'Rank Nostr pubkeys by follows, mutes, reports, zaps, attestation, and related interactions.',
       pagination: true,
       type: {
         default: config.defaultRequestType,
         allowed: config.allowedRequestTypes,
-        valueType: 'event-field-or-tag',
-        description: 'Requested output subject source (exact event field or exact tag name).',
+        valueType: 'pubkey-type',
+        description: 'Requested pubkey output type. MVP supports pubkey aliases only.',
       },
     } as any)
     return reply.send(announcement)
