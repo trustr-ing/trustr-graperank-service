@@ -1,6 +1,8 @@
 import Fastify from 'fastify'
 import WebSocket from 'ws'
 import { useWebSocketImplementation } from 'nostr-tools/pool'
+import { createLakeSource, setArchive } from '@graperank/tsm-graperank-library'
+import type { LakeSource } from '@graperank/tsm-graperank-library'
 import { loadConfig } from './config'
 import { registerRoutes, getEventBuffer } from './routes/request'
 
@@ -13,9 +15,29 @@ async function main(): Promise<void> {
 
   console.log(`[graperank-service] starting service "${config.serviceId}"`)
 
+  // The archive, opened once: each interpreter reads it first when it holds
+  // the interpreter's events and the request does not set liveNetwork; the
+  // relays otherwise. The library tells which per interpreter, as feedback.
+  let archive: LakeSource | undefined
+  if (config.archiveUrl) {
+    try {
+      archive = await createLakeSource({
+        url: config.archiveUrl,
+        memoryLimit: config.archiveMemoryLimit,
+        threads: config.archiveThreads,
+      })
+      setArchive(archive)
+      console.log(`[graperank-service] archive: ${archive.describe()}`)
+    } catch (err) {
+      console.error(`[graperank-service] archive at ${config.archiveUrl} not opened, every interpreter reads the relays:`, (err as Error).message)
+    }
+  } else {
+    console.log('[graperank-service] no ARCHIVE_URL: every interpreter reads the relays')
+  }
+
   const app = Fastify({ logger: false })
 
-  registerRoutes(app, config)
+  registerRoutes(app, config, archive)
 
   try {
     await app.listen({ port: config.port, host: config.host })
@@ -29,6 +51,7 @@ async function main(): Promise<void> {
     console.log('[graperank-service] shutting down...')
     await app.close()
     getEventBuffer().close()
+    await archive?.close()
     console.log('[graperank-service] cleanup complete')
     process.exit(0)
   }

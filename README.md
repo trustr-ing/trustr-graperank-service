@@ -12,10 +12,17 @@ trustr-service-orchestrator
        ▼                          │
   trustr-graperank-service ───────┘
        │
-       │  SimplePool (fetch-only, no publish)
-       ▼
-  Nostr relays (read event data for ranking)
+       │  SimplePool (fetch-only, no publish)      │  DuckDB over HTTP ranges
+       ▼                                           ▼
+  Nostr relays (live network)              the archive (a NAS lake URL)
 ```
+
+Each interpreter reads the archive first when it holds the interpreter's
+events (follows and mutes from list-edges; reports and reactions from
+relation-edges) and the request does not set `config liveNetwork=true`; the
+relays otherwise. The choice is per interpreter, once per request, and is told
+as a kind 7000 info event (`Interpreter nostr-3 reads from archive (lake …)`)
+and recorded as `metrics.sources` on the final feedback event.
 
 The orchestrator handles all **signing, publishing, and relay management**. This service only computes results and returns unsigned events.
 
@@ -35,6 +42,9 @@ cp .env.example .env
 | `READ_RELAYS` | no | Fallback comma-separated read relays used when orchestrator payload does not include `defaultReadRelays` |
 | `ALLOWED_REQUEST_TYPES` | no | Allowed `config:type` values accepted by parser and published in announcement (default: `pubkey,p,P`) |
 | `DEFAULT_REQUEST_TYPE` | no | Default `config:type` published in service announcement (default: `p`) |
+| `ARCHIVE_URL` | no | A lake URL serving `/lists-manifest.json`, `/relations-manifest.json` and the files by hash. Unset: relays only |
+| `ARCHIVE_MEMORY_LIMIT` | no | DuckDB memory limit for the archive (default: `2GB`) |
+| `ARCHIVE_THREADS` | no | DuckDB threads (default: DuckDB's choice) |
 
 ## Development
 
@@ -45,6 +55,20 @@ npm run typecheck  # tsc --noEmit
 npm run build      # esbuild → dist/index.js
 npm start          # node dist/index.js
 ```
+
+## The library tarball
+
+The library is installed from a tarball committed here. To take a new build:
+
+```bash
+(cd ../tsm-graperank-library && npm run build && npm pack)   # bump "version" there first (1.0.4-lake.N)
+cp ../tsm-graperank-library/graperank-tsm-graperank-library-<version>.tgz .
+# point package.json's "@graperank/tsm-graperank-library" at the new file name, then
+npm install
+```
+
+`@duckdb/node-api` (the archive reader) is a native addon: it stays external
+in the esbuild bundle and must be in `node_modules` on the host.
 
 ## Deployment
 
@@ -76,7 +100,7 @@ sudo systemctl enable --now graperank-service
 |---|---|---|
 | `GET` | `/tsm/announce` | Return unsigned kind 37570 announcement (JSON) |
 | `POST` | `/tsm/request` | Accept `{ event, serviceId }`, respond with `text/event-stream` of unsigned events |
-| `GET` | `/health` | Health check — returns `{ status: 'ok', serviceId }` |
+| `GET` | `/health` | Health check — returns `{ status: 'ok', serviceId, archive }`; `archive` is `null` without `ARCHIVE_URL`, else its url, `reachable`, `kinds`, the lists and relations runs with their reference times |
 
 ## Related
 

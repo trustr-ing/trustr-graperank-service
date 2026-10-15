@@ -7,6 +7,12 @@ export interface GrapeRankServiceConfig {
   fallbackReadRelays: string[]
   allowedRequestTypes: string[]
   defaultRequestType: string
+  // The archive: a lake URL serving the derivation manifests and files
+  // (nas-py docs/notes/lake-url-manifests.org). Absent: every interpreter
+  // reads the relays.
+  archiveUrl?: string
+  archiveMemoryLimit: string
+  archiveThreads?: number
 }
 
 function parseCommaSeparated(value?: string): string[] {
@@ -37,5 +43,8 @@ export function loadConfig(): GrapeRankServiceConfig {
     fallbackReadRelays: parseCommaSeparated(process.env['READ_RELAYS']),
     allowedRequestTypes: normalizedAllowedRequestTypes,
     defaultRequestType,
+    archiveUrl: process.env['ARCHIVE_URL']?.trim() || undefined,
+    archiveMemoryLimit: process.env['ARCHIVE_MEMORY_LIMIT']?.trim() || '2GB',
+    archiveThreads: process.env['ARCHIVE_THREADS'] ? parseInt(process.env['ARCHIVE_THREADS'], 10) : undefined,
   }
 }

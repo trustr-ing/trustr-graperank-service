@@ -6,7 +6,7 @@ import {
   generateServiceAnnouncement,
   NostrInterpreterClass,
 } from '@graperank/tsm-graperank-library'
-import type { UnsignedEvent } from '@graperank/tsm-graperank-library'
+import type { UnsignedEvent, LakeSource } from '@graperank/tsm-graperank-library'
 import type { GrapeRankServiceConfig } from '../config'
 import { RequestEventBuffer } from '../buffer/RequestEventBuffer'
 
@@ -28,11 +28,6 @@ interface RequestBody {
 }
 
 const eventBuffer = new RequestEventBuffer()
-const parseServiceRequestWithOptions = parseServiceRequest as (
-  event: NostrEvent,
-  defaults?: unknown,
-  options?: { allowedTypes?: string[] },
-) => ReturnType<typeof parseServiceRequest>
 
 export function getEventBuffer(): RequestEventBuffer {
   return eventBuffer
@@ -41,6 +36,7 @@ export function getEventBuffer(): RequestEventBuffer {
 export function registerRoutes(
   app: FastifyInstance,
   config: GrapeRankServiceConfig,
+  archive?: LakeSource,
 ): void {
   app.get('/tsm/announce', async (_req, reply) => {
     const announcement = generateServiceAnnouncement({
@@ -75,7 +71,7 @@ export function registerRoutes(
     // Parse the request before starting the stream
     let parsedRequest
     try {
-      parsedRequest = parseServiceRequestWithOptions(event, undefined, {
+      parsedRequest = parseServiceRequest(event, undefined, {
         allowedTypes: config.allowedRequestTypes,
       })
     } catch (err) {
@@ -98,7 +94,7 @@ export function registerRoutes(
       return
     }
 
-    console.log(`${logPrefix} starting GrapeRank for pov=${JSON.stringify(parsedRequest.configs.pov)}`)
+    console.log(`${logPrefix} starting GrapeRank for pov=${JSON.stringify(parsedRequest.configs.pov)} liveNetwork=${parsedRequest.configs.liveNetwork ?? 'unset'}`)
 
     // Hijack Fastify response to stream SSE
     reply.hijack()
@@ -111,6 +107,14 @@ export function registerRoutes(
     const sendEvent = (unsignedEvent: UnsignedEvent): void => {
       eventBuffer.addEvent(event.id, unsignedEvent)
       reply.raw.write(`data: ${JSON.stringify(unsignedEvent)}\n\n`)
+      // the library's final feedback carries, per interpreter, where its events came from
+      const metrics = unsignedEvent.tags.find((t) => t[0] === 'metrics')?.[1]
+      if (metrics) {
+        try {
+          const sources = JSON.parse(metrics).sources
+          if (sources) console.log(`${logPrefix} sources: ${JSON.stringify(sources)}`)
+        } catch {}
+      }
     }
 
     const sendKeepAlive = (): void => {
@@ -166,7 +170,23 @@ export function registerRoutes(
   )
 
   app.get('/health', async (_req, reply) => {
-    reply.status(200).send({ status: 'ok', serviceId: config.serviceId })
+    let archiveStatus: Record<string, unknown> | null = null
+    if (archive) {
+      const stats = archive.stats()
+      archiveStatus = {
+        url: stats.where,
+        reachable: await archive.ping(),
+        kinds: stats.kinds,
+        lists: { run: stats.run, referenceTime: stats.referenceTime, files: stats.files, rows: stats.rows },
+        relations: stats.relations
+          ? { run: stats.relations.run, referenceTime: stats.relations.referenceTime, declared: stats.relations.declared.map((r) => `${r.name}:${r.interpreter}`) }
+          : null,
+        description: archive.describe(),
+      }
+    } else if (config.archiveUrl) {
+      archiveStatus = { url: config.archiveUrl, reachable: false, description: 'not opened at startup; every interpreter reads the relays' }
+    }
+    reply.status(200).send({ status: 'ok', serviceId: config.serviceId, archive: archiveStatus })
   })
 }
 
