@@ -15,7 +15,7 @@
   "dependencies": {
     "@duckdb/node-api": "1.5.6-r.1",
     "@graperank/tsm-graperank-library": "file:graperank-tsm-graperank-library-1.0.4-lake.1.tgz",
-    "better-sqlite3": "^11.7.0",
+    "better-sqlite3": "^13.0.3",
     "fastify": "^5.2.1",
     "nostr-tools": "^2.7.2",
     "ws": "^8.18.0"
@@ -26,5 +26,8 @@
     "esbuild": "^0.25.0",
     "tsx": "^4.19.0",
     "typescript": "^5.7.0"
+  },
+  "allowScripts": {
+    "better-sqlite3@13.0.3": true
   }
 }
