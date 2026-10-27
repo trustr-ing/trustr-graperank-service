@@ -1,6 +1,7 @@
 import Fastify from 'fastify'
 import WebSocket from 'ws'
 import { useWebSocketImplementation } from 'nostr-tools/pool'
+import { configureRelayFetch } from '@graperank/tsm-graperank-library'
 import { loadConfig } from './config'
 import { registerRoutes, getEventBuffer } from './routes/request'
 
@@ -12,6 +13,17 @@ async function main(): Promise<void> {
   const config = loadConfig()
 
   console.log(`[graperank-service] starting service "${config.serviceId}"`)
+
+  // Tell the library which relays are on our private network (no politeness
+  // delay, no straggler wait) and any fetch timing overrides. The library
+  // itself assumes nothing about TrustR's relays.
+  const fetchConfig = configureRelayFetch({
+    localRelays: config.localReadRelays,
+    eoseGraceMs: config.fetchEoseGraceMs,
+    interFetchDelayMs: config.fetchInterDelayMs,
+    absoluteTimeoutMs: config.fetchAbsoluteTimeoutMs,
+  })
+  console.log('[graperank-service] relay fetch config:', fetchConfig)
 
   const app = Fastify({ logger: false })
 

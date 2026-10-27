@@ -5,8 +5,20 @@ export interface GrapeRankServiceConfig {
   pageSize: number
   verboseFeedback: boolean
   fallbackReadRelays: string[]
+  /** Relays on the private network: no politeness delay, no straggler wait. */
+  localReadRelays: string[]
+  /** Optional overrides for the library's relay fetch behaviour (ms). */
+  fetchEoseGraceMs?: number
+  fetchInterDelayMs?: number
+  fetchAbsoluteTimeoutMs?: number
   allowedRequestTypes: string[]
   defaultRequestType: string
+}
+
+function parseOptionalMs(value?: string): number | undefined {
+  if (value === undefined || value.trim() === '') return undefined
+  const parsed = Number(value)
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : undefined
 }
 
 function parseCommaSeparated(value?: string): string[] {
@@ -35,6 +47,10 @@ export function loadConfig(): GrapeRankServiceConfig {
     pageSize: parseInt(process.env['PAGE_SIZE'] ?? '1000', 10),
     verboseFeedback: process.env['VERBOSE_FEEDBACK'] === 'true',
     fallbackReadRelays: parseCommaSeparated(process.env['READ_RELAYS']),
+    localReadRelays: parseCommaSeparated(process.env['LOCAL_READ_RELAYS']),
+    fetchEoseGraceMs: parseOptionalMs(process.env['FETCH_EOSE_GRACE_MS']),
+    fetchInterDelayMs: parseOptionalMs(process.env['FETCH_INTER_DELAY_MS']),
+    fetchAbsoluteTimeoutMs: parseOptionalMs(process.env['FETCH_ABSOLUTE_TIMEOUT_MS']),
     allowedRequestTypes: normalizedAllowedRequestTypes,
     defaultRequestType,
   }
